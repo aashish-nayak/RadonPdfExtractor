@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+  <title>PDF to Excel Converter</title>
+  <meta name="description" content="Extract data from Sales Orders and Credit Notes PDFs and generate Excel files" />
+  <meta name="author" content="Aashish Nayak" />
+
+  <meta property="og:title" content="PDF to Excel Converter" />
+  <meta property="og:description" content="Extract data from Sales Orders and Credit Notes PDFs and generate Excel files" />
+  <meta property="og:type" content="website" />
+  
+  <!-- PDF.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
