@@ -47,9 +47,15 @@ function parseSalesOrder(text: string, fileName: string): InvoiceRecord {
     const invoiceDateMatch = text.match(/Invoice Date\s*:\s*(\d{2}\/\d{2}\/\d{4})/);
     const date = invoiceDateMatch ? invoiceDateMatch[1] : '';
 
-    // Extract Invoice Number
-    const invoiceNumberMatch = text.match(/Invoice#\s*:\s*([^\s]+)/);
-    const invoiceNumber = invoiceNumberMatch ? invoiceNumberMatch[1] : '';
+    // Extract P.O.# and Invoice# for Invoice Number format: P.O.# / Invoice#
+    const poNumberMatch = text.match(/P\.O\.#\s*:\s*([^\s]+)/);
+    const poNumber = poNumberMatch ? poNumberMatch[1] : '';
+
+    const invoiceNumMatch = text.match(/Invoice#\s*:\s*([^\s]+)/);
+    const invoiceNum = invoiceNumMatch ? invoiceNumMatch[1] : '';
+
+    const invoiceNumber = `${poNumber} / ${invoiceNum}`;
+
 
     // Extract Client Name (Bill To section)
     const clientNameMatch = text.match(/Bill To\s+([^\n]+)/);
@@ -66,7 +72,8 @@ function parseSalesOrder(text: string, fileName: string): InvoiceRecord {
 
     // Extract Product Line (from items - first item description)
     const productLineMatch = text.match(/Item & Description\s+[^]*?([A-Z0-9\s]+)/);
-    const productLine = productLineMatch ? productLineMatch[1].trim().split('\n')[0] : 'TILES';
+    // const productLine = productLineMatch ? productLineMatch[1].trim().split('\n')[0] : 'TILES';
+    const productLine = 'TILES';
 
     // Extract Discount
     const discountMatch = text.match(/Discount\((\d+\.?\d*)%\)/);
@@ -79,7 +86,7 @@ function parseSalesOrder(text: string, fileName: string): InvoiceRecord {
     // Calculate discounted amount
     const discountedAmount = subAmount * (1 - (parseFloat(discOffered) / 100));
     const amount = parseFloat(discountedAmount.toFixed(2));
-    
+
     return {
         id: crypto.randomUUID(),
         date,
@@ -93,7 +100,7 @@ function parseSalesOrder(text: string, fileName: string): InvoiceRecord {
         soldBy: '',
         source: '',
         sourceName: '',
-        saleType: 'Sales',
+        saleType: '',
         fileName
     };
 }
@@ -103,9 +110,14 @@ function parseCreditNote(text: string, fileName: string): InvoiceRecord {
     const creditDateMatch = text.match(/Credit Date\s*:\s*(\d{2}\/\d{2}\/\d{4})/);
     const date = creditDateMatch ? creditDateMatch[1] : '';
 
-    // Extract Credit Note Number
+    // Extract # (CN number) and Invoice# for Invoice Number format: # / Invoice#
     const cnNumberMatch = text.match(/#\s*:\s*([^\s]+)/);
-    const invoiceNumber = cnNumberMatch ? cnNumberMatch[1] : '';
+    const cnNumber = cnNumberMatch ? cnNumberMatch[1].replace('/JGT', '') : '';
+
+    const invoiceNumMatch = text.match(/Invoice#\s*:\s*([^\s]+)/);
+    const invoiceNum = invoiceNumMatch ? invoiceNumMatch[1] : '';
+
+    const invoiceNumber = `${cnNumber} / ${invoiceNum}`;
 
     // Extract Client Name (Bill To section)
     const clientNameMatch = text.match(/Bill To\s+([^\n]+)/);
@@ -122,7 +134,8 @@ function parseCreditNote(text: string, fileName: string): InvoiceRecord {
 
     // Extract Product Line
     const productLineMatch = text.match(/Item & Description\s+[^]*?([A-Z0-9\s]+)/);
-    const productLine = productLineMatch ? productLineMatch[1].trim().split('\n')[0] : 'TILES';
+    // const productLine = productLineMatch ? productLineMatch[1].trim().split('\n')[0] : 'TILES';
+    const productLine = 'TILES';
 
     // Extract Discount    
     const discountMatch = text.match(/Discount\((\d+\.?\d*)%\)/);
@@ -149,7 +162,7 @@ function parseCreditNote(text: string, fileName: string): InvoiceRecord {
         soldBy: '',
         source: '',
         sourceName: '',
-        saleType: 'Sales',
+        saleType: '',
         fileName
     };
 }

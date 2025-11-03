@@ -3,12 +3,16 @@ import { InvoiceRecord } from '@/types/invoice';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil, Check, X } from 'lucide-react';
 
 interface DataTableProps {
     records: InvoiceRecord[];
     onUpdateRecord: (id: string, updates: Partial<InvoiceRecord>) => void;
 }
+
+const SOURCE_OPTIONS = ['Walkin', 'Builder', 'Plumber', 'Reference'];
+const VOUCHER_OPTIONS = ['Sales', 'CN'];
 
 export function DataTable({ records, onUpdateRecord }: DataTableProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -112,11 +116,21 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                     </TableCell>
                                     <TableCell>
                                         {isEditing ? (
-                                            <Input
+                                            <Select
                                                 value={editValues.source || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, source: e.target.value })}
-                                                className="h-8"
-                                            />
+                                                onValueChange={(value) => setEditValues({ ...editValues, source: value })}
+                                            >
+                                                <SelectTrigger className="h-8">
+                                                    <SelectValue placeholder="Select source" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {SOURCE_OPTIONS.map((option) => (
+                                                        <SelectItem key={option} value={option}>
+                                                            {option}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         ) : (
                                             record.source || '-'
                                         )}
@@ -151,7 +165,7 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                                 className="h-8"
                                             />
                                         ) : (
-                                            record.saleType
+                                            record.saleType || '-'
                                         )}
                                     </TableCell>
                                     <TableCell>
@@ -166,12 +180,30 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${record.voucherType === 'Sales'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {record.voucherType}
-                                        </span>
+                                        {isEditing ? (
+                                            <Select
+                                                value={editValues.voucherType || ''}
+                                                onValueChange={(value) => setEditValues({ ...editValues, voucherType: value })}
+                                            >
+                                                <SelectTrigger className="h-8">
+                                                    <SelectValue placeholder="Select source" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {VOUCHER_OPTIONS.map((option) => (
+                                                        <SelectItem key={option} value={option}>
+                                                            {option}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${record.voucherType === 'Sales'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                {record.voucherType}
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {isEditing ? (
@@ -185,14 +217,14 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                         )}
                                     </TableCell>
                                     <TableCell>₹{isEditing ? (
-                                            <Input
-                                                value={editValues.amount || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, amount: parseFloat(e.target.value) })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.amount.toFixed(2)
-                                        )}
+                                        <Input
+                                            value={editValues.amount || ''}
+                                            onChange={(e) => setEditValues({ ...editValues, amount: parseFloat(e.target.value) })}
+                                            className="h-8"
+                                        />
+                                    ) : (
+                                        record.amount.toFixed(2)
+                                    )}
                                     </TableCell>
                                     <TableCell>
                                         {isEditing ? (
