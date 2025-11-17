@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { InvoiceRecord } from '@/types/invoice';
 import { parsePDF } from '@/lib/pdfParser';
 import { generateExcel, generateFilteredExcel } from '@/lib/excelGenerator';
@@ -11,11 +11,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Download, Search, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Store PDF files in memory with their URLs
+const pdfFileStore = new Map<string, string>();
+
 export default function Index() {
   const [records, setRecords] = useState<InvoiceRecord[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      pdfFileStore.forEach(url => URL.revokeObjectURL(url));
+      pdfFileStore.clear();
+    };
+  }, []);
 
   const handleFilesSelected = async (files: File[]) => {
     setIsProcessing(true);
@@ -25,6 +36,10 @@ export default function Index() {
       try {
         const record = await parsePDF(file);
         if (record) {
+          // Create a blob URL for the PDF file
+          const blobUrl = URL.createObjectURL(file);
+          pdfFileStore.set(record.fileName, blobUrl);
+          
           newRecords.push(record);
           toast.success(`Parsed: ${file.name}`);
         } else {
@@ -87,6 +102,10 @@ export default function Index() {
     .filter(r => r.voucherType === 'CN')
     .reduce((sum, r) => sum + r.amount, 0);
 
+  const totalRMA = records
+    .filter(r => r.voucherType === 'RMA')
+    .reduce((sum, r) => sum + r.amount, 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
@@ -96,7 +115,7 @@ export default function Index() {
             PDF to Excel Converter
           </h1>
           <p className="text-muted-foreground">
-            Extract data from Sales Orders and Credit Notes
+            Extract data from Sales Orders, Credit Notes, and RMA Documents
           </p>
         </div>
 
@@ -105,7 +124,7 @@ export default function Index() {
 
         {/* Statistics */}
         {records.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Total Records</CardDescription>
@@ -130,8 +149,16 @@ export default function Index() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
+                <CardDescription>RMA Returns</CardDescription>
+                <CardTitle className="text-3xl text-orange-600">
+                  {records.filter(r => r.voucherType === 'RMA').length}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
                 <CardDescription>Net Total</CardDescription>
-                <CardTitle className="text-3xl">₹{(totalSales - totalCN).toFixed(2)}</CardTitle>
+                <CardTitle className="text-3xl">₹{(totalSales - totalCN - totalRMA).toFixed(2)}</CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -163,6 +190,7 @@ export default function Index() {
                     <SelectItem value="All">All Types</SelectItem>
                     <SelectItem value="Sales">Sales Only</SelectItem>
                     <SelectItem value="CN">Credit Notes Only</SelectItem>
+                    <SelectItem value="RMA">RMA Only</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={handleExportFiltered} variant="outline">
@@ -189,3 +217,7 @@ export default function Index() {
     </div>
   );
 }
+
+// Export the pdfFileStore for use in DataTable
+// eslint-disable-next-line react-refresh/only-export-components
+export { pdfFileStore };

@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, ExternalLink } from 'lucide-react';
+import { pdfFileStore } from '@/pages/Index';
 
 interface DataTableProps {
     records: InvoiceRecord[];
@@ -12,7 +13,7 @@ interface DataTableProps {
 }
 
 const SOURCE_OPTIONS = ['Walkin', 'Builder', 'Plumber', 'Reference'];
-const VOUCHER_OPTIONS = ['Sales', 'CN'];
+const VOUCHER_OPTIONS = ['Sales', 'CN', 'RMA'];
 
 export function DataTable({ records, onUpdateRecord }: DataTableProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,6 +49,28 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
         setEditValues({});
     };
 
+    const getVoucherTypeStyle = (voucherType: string) => {
+        switch (voucherType) {
+            case 'Sales':
+                return 'bg-green-100 text-green-800';
+            case 'CN':
+                return 'bg-red-100 text-red-800';
+            case 'RMA':
+                return 'bg-orange-100 text-orange-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const handleOpenPDF = (record: InvoiceRecord) => {
+        const blobUrl = pdfFileStore.get(record.fileName);
+        if (blobUrl) {
+            window.open(blobUrl, '_blank');
+        } else {
+            console.error('PDF file not found:', record.fileName);
+        }
+    };
+
     return (
         <div className="border rounded-lg overflow-x-auto">
             <Table>
@@ -65,13 +88,14 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                         <TableHead>Voucher Type</TableHead>
                         <TableHead>Invoice Number</TableHead>
                         <TableHead>AMOUNT</TableHead>
+                        <TableHead>Uploaded File</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {records.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
                                 No records found. Upload PDF files to get started.
                             </TableCell>
                         </TableRow>
@@ -186,7 +210,7 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                                 onValueChange={(value) => setEditValues({ ...editValues, voucherType: value })}
                                             >
                                                 <SelectTrigger className="h-8">
-                                                    <SelectValue placeholder="Select source" />
+                                                    <SelectValue placeholder="Select type" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {VOUCHER_OPTIONS.map((option) => (
@@ -197,10 +221,7 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                                 </SelectContent>
                                             </Select>
                                         ) : (
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${record.voucherType === 'Sales'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
-                                                }`}>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${getVoucherTypeStyle(record.voucherType)}`}>
                                                 {record.voucherType}
                                             </span>
                                         )}
@@ -225,6 +246,16 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                     ) : (
                                         record.amount.toFixed(2)
                                     )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <button
+                                            onClick={() => handleOpenPDF(record)}
+                                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline text-sm"
+                                            title="Open PDF in new tab"
+                                        >
+                                            <span className="truncate max-w-[150px]">{record.fileName}</span>
+                                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                        </button>
                                     </TableCell>
                                     <TableCell>
                                         {isEditing ? (
