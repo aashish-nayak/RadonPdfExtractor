@@ -4,18 +4,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Check, X, ExternalLink } from 'lucide-react';
+import { Pencil, Check, X, ExternalLink, Trash2 } from 'lucide-react';
 import { pdfFileStore } from '@/pages/Index';
 
 interface DataTableProps {
     records: InvoiceRecord[];
     onUpdateRecord: (id: string, updates: Partial<InvoiceRecord>) => void;
+    onDeleteRecord: (id: string) => void;
 }
 
 const SOURCE_OPTIONS = ['Walkin', 'Builder', 'Plumber', 'Reference'];
 const VOUCHER_OPTIONS = ['Sales', 'CN', 'RMA'];
 
-export function DataTable({ records, onUpdateRecord }: DataTableProps) {
+export function DataTable({ records, onUpdateRecord, onDeleteRecord }: DataTableProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValues, setEditValues] = useState<Partial<InvoiceRecord>>({});
 
@@ -47,6 +48,12 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
     const cancelEdit = () => {
         setEditingId(null);
         setEditValues({});
+    };
+
+    const handleDelete = (record: InvoiceRecord) => {
+        if (window.confirm(`Are you sure you want to delete the record for ${record.clientName}?`)) {
+            onDeleteRecord(record.id);
+        }
     };
 
     const getVoucherTypeStyle = (voucherType: string) => {
@@ -89,7 +96,7 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                         <TableHead>Invoice Number</TableHead>
                         <TableHead>AMOUNT</TableHead>
                         <TableHead>Uploaded File</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
+                        <TableHead className="w-[120px]">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -268,9 +275,20 @@ export function DataTable({ records, onUpdateRecord }: DataTableProps) {
                                                 </Button>
                                             </div>
                                         ) : (
-                                            <Button size="sm" variant="ghost" onClick={() => startEdit(record)}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
+                                            <div className="flex gap-1">
+                                                <Button size="sm" variant="ghost" onClick={() => startEdit(record)} title="Edit">
+                                                    <Pencil className="w-4 h-4" />
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    onClick={() => handleDelete(record)}
+                                                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
