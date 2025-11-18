@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Check, X, ExternalLink, Trash2 } from 'lucide-react';
+import { Pencil, Check, X, ExternalLink, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { pdfFileStore } from '@/pages/Index';
 
 interface DataTableProps {
@@ -15,10 +15,13 @@ interface DataTableProps {
 
 const SOURCE_OPTIONS = ['Walkin', 'Builder', 'Plumber', 'Reference'];
 const VOUCHER_OPTIONS = ['Sales', 'CN', 'RMA'];
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 export function DataTable({ records, onUpdateRecord, onDeleteRecord }: DataTableProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValues, setEditValues] = useState<Partial<InvoiceRecord>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(25);
 
     const startEdit = (record: InvoiceRecord) => {
         setEditingId(record.id);
@@ -78,225 +81,297 @@ export function DataTable({ records, onUpdateRecord, onDeleteRecord }: DataTable
         }
     };
 
+    // Pagination calculations
+    const totalPages = Math.ceil(records.length / perPage);
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    const paginatedRecords = records.slice(startIndex, endIndex);
+
+    // Reset to page 1 when perPage changes or records change
+    const handlePerPageChange = (value: string) => {
+        setPerPage(Number(value));
+        setCurrentPage(1);
+    };
+
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const goToPreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
     return (
-        <div className="border rounded-lg overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Sold By</TableHead>
-                        <TableHead>Client Name</TableHead>
-                        <TableHead>Number</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead>Source NAME</TableHead>
-                        <TableHead>Product Line</TableHead>
-                        <TableHead>Sale Type</TableHead>
-                        <TableHead>Disc Offered %</TableHead>
-                        <TableHead>Voucher Type</TableHead>
-                        <TableHead>Invoice Number</TableHead>
-                        <TableHead>AMOUNT</TableHead>
-                        <TableHead>Uploaded File</TableHead>
-                        <TableHead className="w-[120px]">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {records.length === 0 ? (
+        <div className="space-y-4">
+            <div className="border rounded-lg overflow-x-auto">
+                <Table>
+                    <TableHeader>
                         <TableRow>
-                            <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
-                                No records found. Upload PDF files to get started.
-                            </TableCell>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Sold By</TableHead>
+                            <TableHead>Client Name</TableHead>
+                            <TableHead>Number</TableHead>
+                            <TableHead>Source</TableHead>
+                            <TableHead>Source NAME</TableHead>
+                            <TableHead>Product Line</TableHead>
+                            <TableHead>Sale Type</TableHead>
+                            <TableHead>Disc Offered %</TableHead>
+                            <TableHead>Voucher Type</TableHead>
+                            <TableHead>Invoice Number</TableHead>
+                            <TableHead>AMOUNT</TableHead>
+                            <TableHead>Uploaded File</TableHead>
+                            <TableHead className="w-[120px]">Actions</TableHead>
                         </TableRow>
-                    ) : (
-                        records.map((record) => {
-                            const isEditing = editingId === record.id;
-                            return (
-                                <TableRow key={record.id}>
-                                    <TableCell>{record.date}</TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.soldBy || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, soldBy: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.soldBy || '-'
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.clientName || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, clientName: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.clientName
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.number || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, number: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.number
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Select
-                                                value={editValues.source || ''}
-                                                onValueChange={(value) => setEditValues({ ...editValues, source: value })}
-                                            >
-                                                <SelectTrigger className="h-8">
-                                                    <SelectValue placeholder="Select source" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {SOURCE_OPTIONS.map((option) => (
-                                                        <SelectItem key={option} value={option}>
-                                                            {option}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : (
-                                            record.source || '-'
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.sourceName || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, sourceName: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.sourceName || '-'
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.productLine || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, productLine: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.productLine
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.saleType || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, saleType: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.saleType || '-'
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.discOffered || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, discOffered: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.discOffered
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Select
-                                                value={editValues.voucherType || ''}
-                                                onValueChange={(value) => setEditValues({ ...editValues, voucherType: value })}
-                                            >
-                                                <SelectTrigger className="h-8">
-                                                    <SelectValue placeholder="Select type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {VOUCHER_OPTIONS.map((option) => (
-                                                        <SelectItem key={option} value={option}>
-                                                            {option}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : (
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${getVoucherTypeStyle(record.voucherType)}`}>
-                                                {record.voucherType}
-                                            </span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editValues.invoiceNumber || ''}
-                                                onChange={(e) => setEditValues({ ...editValues, invoiceNumber: e.target.value })}
-                                                className="h-8"
-                                            />
-                                        ) : (
-                                            record.invoiceNumber
-                                        )}
-                                    </TableCell>
-                                    <TableCell>₹{isEditing ? (
-                                        <Input
-                                            value={editValues.amount || ''}
-                                            onChange={(e) => setEditValues({ ...editValues, amount: parseFloat(e.target.value) })}
-                                            className="h-8"
-                                        />
-                                    ) : (
-                                        record.amount.toFixed(2)
-                                    )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <button
-                                            onClick={() => handleOpenPDF(record)}
-                                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline text-sm"
-                                            title="Open PDF in new tab"
-                                        >
-                                            <span className="truncate max-w-[150px]">{record.fileName}</span>
-                                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                                        </button>
-                                    </TableCell>
-                                    <TableCell>
-                                        {isEditing ? (
-                                            <div className="flex gap-1">
-                                                <Button size="sm" variant="ghost" onClick={saveEdit}>
-                                                    <Check className="w-4 h-4" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex gap-1">
-                                                <Button size="sm" variant="ghost" onClick={() => startEdit(record)} title="Edit">
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="ghost" 
-                                                    onClick={() => handleDelete(record)}
-                                                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                                                    title="Delete"
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedRecords.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+                                    No records found. Upload PDF files to get started.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            paginatedRecords.map((record) => {
+                                const isEditing = editingId === record.id;
+                                return (
+                                    <TableRow key={record.id}>
+                                        <TableCell>{record.date}</TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.soldBy || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, soldBy: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.soldBy || '-'
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.clientName || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, clientName: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.clientName
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.number || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, number: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.number
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Select
+                                                    value={editValues.source || ''}
+                                                    onValueChange={(value) => setEditValues({ ...editValues, source: value })}
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
+                                                    <SelectTrigger className="h-8">
+                                                        <SelectValue placeholder="Select source" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {SOURCE_OPTIONS.map((option) => (
+                                                            <SelectItem key={option} value={option}>
+                                                                {option}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                record.source || '-'
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.sourceName || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, sourceName: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.sourceName || '-'
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.productLine || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, productLine: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.productLine
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.saleType || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, saleType: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.saleType || '-'
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.discOffered || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, discOffered: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.discOffered
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Select
+                                                    value={editValues.voucherType || ''}
+                                                    onValueChange={(value) => setEditValues({ ...editValues, voucherType: value })}
+                                                >
+                                                    <SelectTrigger className="h-8">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {VOUCHER_OPTIONS.map((option) => (
+                                                            <SelectItem key={option} value={option}>
+                                                                {option}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${getVoucherTypeStyle(record.voucherType)}`}>
+                                                    {record.voucherType}
+                                                </span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editValues.invoiceNumber || ''}
+                                                    onChange={(e) => setEditValues({ ...editValues, invoiceNumber: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                            ) : (
+                                                record.invoiceNumber
+                                            )}
+                                        </TableCell>
+                                        <TableCell>₹{isEditing ? (
+                                            <Input
+                                                value={editValues.amount || ''}
+                                                onChange={(e) => setEditValues({ ...editValues, amount: parseFloat(e.target.value) })}
+                                                className="h-8"
+                                            />
+                                        ) : (
+                                            record.amount.toFixed(2)
                                         )}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })
-                    )}
-                </TableBody>
-            </Table>
+                                        </TableCell>
+                                        <TableCell>
+                                            <button
+                                                onClick={() => handleOpenPDF(record)}
+                                                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline text-sm"
+                                                title="Open PDF in new tab"
+                                            >
+                                                <span className="truncate max-w-[150px]">{record.fileName}</span>
+                                                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                            </button>
+                                        </TableCell>
+                                        <TableCell>
+                                            {isEditing ? (
+                                                <div className="flex gap-1">
+                                                    <Button size="sm" variant="ghost" onClick={saveEdit}>
+                                                        <Check className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-1">
+                                                    <Button size="sm" variant="ghost" onClick={() => startEdit(record)} title="Edit">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost" 
+                                                        onClick={() => handleDelete(record)}
+                                                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+            {/* Pagination Controls */}
+            {records.length > 0 && (
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Rows per page:</span>
+                        <Select value={perPage.toString()} onValueChange={handlePerPageChange}>
+                            <SelectTrigger className="w-[80px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {PER_PAGE_OPTIONS.map((option) => (
+                                    <SelectItem key={option} value={option.toString()}>
+                                        {option}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-muted-foreground">
+                            Page {currentPage} of {totalPages} ({records.length} total records)
+                        </span>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
